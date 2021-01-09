@@ -51,16 +51,19 @@ import Knob from 'primevue/knob';
 import Dropdown from 'primevue/dropdown';
 
 const time_signature_types = [
-  { name: '4/4', value: '4/4' },
-  { name: '3/4', value: '3/4' },
+  { name: '4/4', value: [4, 4] },
+  { name: '3/4', value: [3, 4] },
 ];
 
 interface IMetronomeType {
   tempo: number;
   time_signature: any;
+  step: number;
   is_stopped: boolean;
   interval: null | ReturnType<typeof setInterval>;
   time_signature_types: any[];
+  tick_sound: HTMLAudioElement;
+  strong_tick_sound: HTMLAudioElement;
 }
 
 export default defineComponent({
@@ -69,21 +72,38 @@ export default defineComponent({
     return {
       tempo: 90,
       time_signature: time_signature_types[0],
+      step: 1,
       is_stopped: true,
       interval: null,
       time_signature_types,
+      tick_sound: new Audio(require('../assets/audio/tick.mp3')),
+      strong_tick_sound: new Audio(require('../assets/audio/strong_tick.mp3')),
     } as IMetronomeType;
   },
   components: { Button, Card, Knob, Dropdown },
   methods: {
     tick() {
-      const tick_sound = new Audio(require('../assets/audio/tick.wav'));
-      tick_sound.play();
+      if (this.step === 1) {
+        this.strong_tick_sound.play();
+        this.step += 1;
+        return;
+      }
+
+      this.tick_sound.play();
+
+      const [beats] = this.time_signature.value;
+
+      if (this.step === beats) {
+        this.step = 1;
+      } else {
+        this.step += 1;
+      }
     },
     togglePaused() {
       if (!this.is_stopped && this.interval) {
         this.is_stopped = true;
         clearInterval(this.interval);
+        this.step = 1;
       } else {
         this.is_stopped = false;
         this.interval = setInterval(this.tick, (60 * 1000) / this.tempo);

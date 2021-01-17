@@ -34,6 +34,7 @@
           <Dropdown
             v-model="time_signature"
             :options="time_signature_types"
+            @change="changeTimeSignature"
             optionLabel="name"
             placeholder="Select a City"
           />
@@ -44,7 +45,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, onMounted, onUpdated, ref } from 'vue';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Knob from 'primevue/knob';
@@ -68,54 +69,92 @@ interface IMetronomeType {
 
 export default defineComponent({
   name: 'Metronome',
-  data() {
+  setup() {
+    const tick_sounds = ref<any>({});
+    const tempo = ref(90);
+    const time_signature = ref(time_signature_types[0]);
+    const step = ref(1);
+    const is_stopped = ref(true);
+    const interval = ref<any>(null);
+
+    const constructTicksMap = () => {
+      const value = time_signature.value.value[0];
+
+      return [...new Array(value)].reduce((acc, u, index) => {
+        if (index === 0) {
+          acc[index + 1] = new Audio(
+            require('../assets/audio/strong_tick.mp3'),
+          );
+
+          return acc;
+        }
+
+        acc[index + 1] = new Audio(require('../assets/audio/tick.mp3'));
+
+        return acc;
+      }, {} as any);
+    };
+
+    onMounted(() => {
+      tick_sounds.value = constructTicksMap();
+
+      console.log(tick_sounds.value);
+    });
+
+    onUpdated(() => {
+      console.log('updated');
+    });
+
+    const increaseTempo = () => {
+      tempo.value += 1;
+    };
+
+    const decreaseTempo = () => {
+      tempo.value -= 1;
+    };
+
+    const tick = () => {
+      tick_sounds.value[step.value].play();
+
+      const [beats] = time_signature.value.value;
+
+      if (step.value === beats) {
+        step.value = 1;
+      } else {
+        step.value += 1;
+      }
+    };
+
+    const togglePaused = () => {
+      if (!is_stopped.value && interval.value) {
+        is_stopped.value = true;
+        clearInterval(interval.value);
+        step.value = 1;
+      } else {
+        is_stopped.value = false;
+        interval.value = setInterval(tick, (60 * 1000) / tempo.value);
+      }
+    };
+
+    const changeTimeSignature = (event: any) => {
+      console.log('e', event.value);
+      time_signature.value = event.value;
+      constructTicksMap();
+    };
+
     return {
-      tempo: 90,
-      time_signature: time_signature_types[0],
-      step: 1,
-      is_stopped: true,
-      interval: null,
+      tempo,
+      tick_sounds,
+      time_signature,
+      increaseTempo,
+      decreaseTempo,
+      togglePaused,
+      is_stopped,
       time_signature_types,
-      tick_sound: new Audio(require('../assets/audio/tick.mp3')),
-      strong_tick_sound: new Audio(require('../assets/audio/strong_tick.mp3')),
-    } as IMetronomeType;
+      changeTimeSignature,
+    };
   },
   components: { Button, Card, Knob, Dropdown },
-  methods: {
-    tick() {
-      if (this.step === 1) {
-        this.strong_tick_sound.play();
-        this.step += 1;
-        return;
-      }
-
-      this.tick_sound.play();
-
-      const [beats] = this.time_signature.value;
-
-      if (this.step === beats) {
-        this.step = 1;
-      } else {
-        this.step += 1;
-      }
-    },
-    togglePaused() {
-      if (!this.is_stopped && this.interval) {
-        this.is_stopped = true;
-        clearInterval(this.interval);
-        this.step = 1;
-      } else {
-        this.is_stopped = false;
-        this.interval = setInterval(this.tick, (60 * 1000) / this.tempo);
-      }
-    },
-    increaseTempo() {
-      this.tempo += 1;
-    },
-    decreaseTempo() {
-      this.tempo -= 1;
-    },
-  },
 });
 </script>
 

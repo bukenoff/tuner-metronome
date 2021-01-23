@@ -50,6 +50,8 @@ import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Knob from 'primevue/knob';
 import Dropdown from 'primevue/dropdown';
+import strong_tick_sound from '../assets/audio/strong_tick.mp3';
+import tick_sound from '../assets/audio/tick.mp3';
 
 const time_signature_types = [
   { name: '4/4', value: [4, 4] },
@@ -82,14 +84,12 @@ export default defineComponent({
 
       return [...new Array(value)].reduce((acc, u, index) => {
         if (index === 0) {
-          acc[index + 1] = new Audio(
-            require('../assets/audio/strong_tick.mp3'),
-          );
+          acc[index + 1] = new Audio(strong_tick_sound);
 
           return acc;
         }
 
-        acc[index + 1] = new Audio(require('../assets/audio/tick.mp3'));
+        acc[index + 1] = new Audio(tick_sound);
 
         return acc;
       }, {} as any);

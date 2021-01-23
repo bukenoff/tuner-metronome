@@ -25,10 +25,13 @@
       />
       <div class="beats">
         <div class="indicate">
-          <div class="beat-item"></div>
-          <div class="beat-item"></div>
-          <div class="beat-item"></div>
-          <div class="beat-item"></div>
+          <Badge
+            v-for="(item, index) of [...new Array(time_signature.value[0])]"
+            :key="index"
+            value=" "
+            class="p-mr-2"
+            :class="step - 1 === index ? 'active' : 'not-active'"
+          ></Badge>
         </div>
         <div class="metronome-time-signature">
           <Dropdown
@@ -48,6 +51,7 @@
 import { defineComponent, onMounted, onUpdated, ref } from 'vue';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
+import Badge from 'primevue/badge';
 import Knob from 'primevue/knob';
 import Dropdown from 'primevue/dropdown';
 import strong_tick_sound from '../assets/audio/strong_tick.mp3';
@@ -75,7 +79,7 @@ export default defineComponent({
     const tick_sounds = ref<any>({});
     const tempo = ref(90);
     const time_signature = ref(time_signature_types[0]);
-    const step = ref(1);
+    const step = ref(0);
     const is_stopped = ref(true);
     const interval = ref<any>(null);
 
@@ -99,6 +103,7 @@ export default defineComponent({
       tick_sounds.value = constructTicksMap();
 
       console.log(tick_sounds.value);
+      console.log('time sig', time_signature);
     });
 
     onUpdated(() => {
@@ -114,8 +119,6 @@ export default defineComponent({
     };
 
     const tick = () => {
-      tick_sounds.value[step.value].play();
-
       const [beats] = time_signature.value.value;
 
       if (step.value === beats) {
@@ -123,16 +126,19 @@ export default defineComponent({
       } else {
         step.value += 1;
       }
+
+      tick_sounds.value[step.value].play();
     };
 
     const togglePaused = () => {
       if (!is_stopped.value && interval.value) {
         is_stopped.value = true;
         clearInterval(interval.value);
-        step.value = 1;
+        step.value = 0;
       } else {
         is_stopped.value = false;
         interval.value = setInterval(tick, (60 * 1000) / tempo.value);
+        step.value = 1;
       }
     };
 
@@ -143,6 +149,7 @@ export default defineComponent({
     };
 
     return {
+      step,
       tempo,
       tick_sounds,
       time_signature,
@@ -154,7 +161,7 @@ export default defineComponent({
       changeTimeSignature,
     };
   },
-  components: { Button, Card, Knob, Dropdown },
+  components: { Button, Card, Knob, Dropdown, Badge },
 });
 </script>
 
@@ -170,5 +177,24 @@ export default defineComponent({
 
 .metronome-time-signature {
   margin-top: 0.5rem;
+}
+
+.indicate {
+  margin: 0.5rem 0;
+}
+
+@keyframes blink {
+  from {
+    transform: scale(1);
+    background-color: #2196f3;
+  }
+  to {
+    transform: scale(1.1);
+    background-color: #689f38;
+  }
+}
+
+.active {
+  animation: blink 0.1s ease 1;
 }
 </style>

@@ -137,6 +137,7 @@ export default defineComponent({
         step.value = 0;
       } else {
         is_stopped.value = false;
+        tick();
         interval.value = setInterval(tick, (60 * 1000) / tempo.value);
         step.value = 1;
       }
